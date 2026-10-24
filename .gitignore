@@ -1,0 +1,9 @@
+/target
+*.rs.bk
+*.wav
+__pycache__/
+*.py[cod]
+*$py.class
+.DS_Store
+.idea/
+.vscode/

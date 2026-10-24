@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Aeon-Cut
+Comment=Audio Silence & Breath Cutter for DaVinci Resolve
+Exec=/home/aethelis/projects/aeon-cut/target/release/aeon-cut
+Icon=/home/aethelis/projects/aeon-cut/assets/Aeoncut.png
+Terminal=false
+Type=Application
+Categories=AudioVideo;AudioVideoEditing;
+StartupNotify=true
+StartupWMClass=aeon-cut

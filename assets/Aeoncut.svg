@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="512"
+   height="512"
+   viewBox="0 0 135.46667 135.46667"
+   version="1.1"
+   id="svg1"
+   inkscape:version="1.4.4 (dcaf3e7d9e, 2026-05-05)"
+   sodipodi:docname="Aeonlogo.svg"
+   inkscape:export-filename="aeon-cut/Aeoncut.png"
+   inkscape:export-xdpi="192"
+   inkscape:export-ydpi="192"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview1"
+     pagecolor="#505050"
+     bordercolor="#eeeeee"
+     borderopacity="1"
+     inkscape:showpageshadow="0"
+     inkscape:pageopacity="0"
+     inkscape:pagecheckerboard="true"
+     inkscape:deskcolor="#505050"
+     inkscape:document-units="px"
+     showgrid="true"
+     inkscape:zoom="1.4677327"
+     inkscape:cx="63.703699"
+     inkscape:cy="305.57336"
+     inkscape:window-width="2516"
+     inkscape:window-height="1416"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="layer1">
+    <inkscape:grid
+       id="grid1"
+       units="px"
+       originx="0"
+       originy="0"
+       spacingx="0.26458334"
+       spacingy="0.26458334"
+       empcolor="#0099e5"
+       empopacity="0.30196078"
+       color="#0099e5"
+       opacity="0.14901961"
+       empspacing="16"
+       enabled="true"
+       visible="true" />
+    <inkscape:page
+       x="0"
+       y="0"
+       width="135.46667"
+       height="135.46667"
+       id="page2"
+       margin="0"
+       bleed="0" />
+  </sodipodi:namedview>
+  <defs
+     id="defs1">
+    <linearGradient
+       id="swatch59"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#7f7f7f;stop-opacity:0.85097998;"
+         offset="0"
+         id="stop60" />
+    </linearGradient>
+    <linearGradient
+       id="swatch58"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#c91633;stop-opacity:0;"
+         offset="0"
+         id="stop59" />
+    </linearGradient>
+    <linearGradient
+       id="swatch57"
+       inkscape:swatch="solid">
+      <stop
+         style="stop-color:#7f7f7f;stop-opacity:1;"
+         offset="0"
+         id="stop58" />
+    </linearGradient>
+  </defs>
+  <g
+     inkscape:label="Katman 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:#656565;fill-opacity:1;stroke:#8e8e8e;stroke-width:6.48623;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       d="M 42.868805,92.872028 107.83415,30.430404"
+       id="path1" />
+    <path
+       style="fill:#656565;fill-opacity:1;stroke:#999999;stroke-width:5.99778;stroke-linecap:square;stroke-linejoin:round;stroke-dasharray:none;stroke-opacity:1;paint-order:stroke fill markers"
+       d="M 65.410985,20.344309 84.271856,98.717858"
+       id="path2" />
+    <path
+       id="path3"
+       style="fill:#800080;fill-rule:evenodd;stroke:#ff00ff;stroke-width:3.15931;stroke-dasharray:none;stroke-opacity:0.963813"
+       d="m 88.990137,84.328491 a 18.753929,11.172553 66.844641 0 0 -2.909901,0.54932 18.753929,11.172553 66.844641 0 0 -2.898013,21.636409 18.753929,11.172553 66.844641 0 0 17.646987,12.84986 18.753929,11.172553 66.844641 0 0 2.89801,-21.636408 18.753929,11.172553 66.844641 0 0 -14.737083,-13.399181 z m 1.518254,5.945896 a 13.958844,6.359256 76.623992 0 1 8.132838,10.286193 13.958844,6.359256 76.623992 0 1 -1.59887,16.60932 13.958844,6.359256 76.623992 0 1 -9.739456,-9.86451 13.958844,6.359256 76.623992 0 1 1.599385,-16.609323 13.958844,6.359256 76.623992 0 1 1.606103,-0.42168 z" />
+    <path
+       id="path3-3"
+       style="fill:#800080;fill-opacity:1;fill-rule:evenodd;stroke:#ff00ff;stroke-width:3.70846;stroke-dasharray:none;stroke-opacity:0.963813"
+       d="M 41.631437,73.86263 A 11.901174,19.976971 55.109715 0 0 25.96831,79.108821 11.901174,19.976971 55.109715 0 0 16.389566,100.29771 11.901174,19.976971 55.109715 0 0 39.582983,98.632701 11.901174,19.976971 55.109715 0 0 49.161727,77.443807 11.901174,19.976971 55.109715 0 0 41.631437,73.86263 Z m -2.722832,2.838069 a 9.0785318,15.076055 53.130909 0 1 5.616712,2.764173 9.0785318,15.076055 53.130909 0 1 -7.144267,16.355079 9.0785318,15.076055 53.130909 0 1 -17.29817,1.28519 9.0785318,15.076055 53.130909 0 1 7.143751,-16.355076 9.0785318,15.076055 53.130909 0 1 11.681974,-4.049366 z" />
+  </g>
+</svg>
