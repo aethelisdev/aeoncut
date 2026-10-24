@@ -405,62 +405,99 @@ impl eframe::App for AeonCutApp {
                     }
                 });
 
-            // ================= SETTINGS SLIDERS =================
-            egui::CollapsingHeader::new(egui::RichText::new(t.settings_header).strong())
-                .default_open(true)
-                .show(ui, |ui| {
-                    egui::Grid::new("settings_grid")
-                        .num_columns(2)
-                        .spacing([20.0, 10.0])
-                        .show(ui, |ui| {
-                            ui.label(t.silence_threshold);
-                            ui.horizontal(|ui| {
-                                ui.add(egui::Slider::new(&mut self.settings.threshold_db, -60.0..=-10.0).suffix(" dB"));
-                                ui.label(egui::RichText::new(t.silence_threshold_hint).size(11.0).color(Color32::GRAY));
-                            });
-                            ui.end_row();
+            // ================= SETTINGS SLIDERS (Purple Knobs) =================
+            ui.scope(|ui| {
+                let widgets = &mut ui.visuals_mut().widgets;
+                // Inactive slider handle (çubuk tutucusu):
+                widgets.inactive.bg_fill = Color32::from_rgb(58, 28, 84);
+                widgets.inactive.fg_stroke = Stroke::new(1.5, Color32::from_rgb(170, 52, 224));
+                widgets.inactive.bg_stroke = Stroke::new(1.0, Color32::from_rgb(62, 40, 78));
 
-                            ui.label(t.min_silence_dur);
-                            ui.horizontal(|ui| {
-                                ui.add(egui::Slider::new(&mut self.settings.min_silence_ms, 100..=1500).suffix(" ms"));
-                                ui.label(egui::RichText::new(t.min_silence_hint).size(11.0).color(Color32::GRAY));
-                            });
-                            ui.end_row();
+                // Hovered slider handle:
+                widgets.hovered.bg_fill = Color32::from_rgb(78, 36, 112);
+                widgets.hovered.fg_stroke = Stroke::new(1.8, Color32::from_rgb(215, 75, 255));
+                widgets.hovered.bg_stroke = Stroke::new(1.0, Color32::from_rgb(105, 52, 145));
 
-                            ui.label(t.padding_start);
-                            ui.horizontal(|ui| {
-                                ui.add(egui::Slider::new(&mut self.settings.padding_start_ms, 0..=400).suffix(" ms"));
-                                ui.label(egui::RichText::new(t.padding_start_hint).size(11.0).color(Color32::GRAY));
-                            });
-                            ui.end_row();
+                // Active / Dragging slider handle:
+                widgets.active.bg_fill = Color32::from_rgb(98, 44, 140);
+                widgets.active.fg_stroke = Stroke::new(2.0, Color32::from_rgb(255, 110, 255));
+                widgets.active.bg_stroke = Stroke::new(1.0, Color32::from_rgb(180, 60, 240));
 
-                            ui.label(t.padding_end);
-                            ui.horizontal(|ui| {
-                                ui.add(egui::Slider::new(&mut self.settings.padding_end_ms, 0..=400).suffix(" ms"));
-                                ui.label(egui::RichText::new(t.padding_end_hint).size(11.0).color(Color32::GRAY));
-                            });
-                            ui.end_row();
-                        });
-                });
+                egui::CollapsingHeader::new(egui::RichText::new(t.settings_header).strong().color(Color32::from_rgb(225, 218, 240)))
+                    .default_open(true)
+                    .show(ui, |ui| {
+                        egui::Grid::new("settings_grid")
+                            .num_columns(2)
+                            .spacing([20.0, 10.0])
+                            .show(ui, |ui| {
+                                ui.label(t.silence_threshold);
+                                ui.horizontal(|ui| {
+                                    ui.add(egui::Slider::new(&mut self.settings.threshold_db, -60.0..=-10.0).suffix(" dB"));
+                                    ui.label(egui::RichText::new(t.silence_threshold_hint).size(11.0).color(Color32::from_rgb(140, 135, 155)));
+                                });
+                                ui.end_row();
 
-            // ================= MODE SELECTOR =================
+                                ui.label(t.min_silence_dur);
+                                ui.horizontal(|ui| {
+                                    ui.add(egui::Slider::new(&mut self.settings.min_silence_ms, 100..=1500).suffix(" ms"));
+                                    ui.label(egui::RichText::new(t.min_silence_hint).size(11.0).color(Color32::from_rgb(140, 135, 155)));
+                                });
+                                ui.end_row();
+
+                                ui.label(t.padding_start);
+                                ui.horizontal(|ui| {
+                                    ui.add(egui::Slider::new(&mut self.settings.padding_start_ms, 0..=400).suffix(" ms"));
+                                    ui.label(egui::RichText::new(t.padding_start_hint).size(11.0).color(Color32::from_rgb(140, 135, 155)));
+                                });
+                                ui.end_row();
+
+                                ui.label(t.padding_end);
+                                ui.horizontal(|ui| {
+                                    ui.add(egui::Slider::new(&mut self.settings.padding_end_ms, 0..=400).suffix(" ms"));
+                                    ui.label(egui::RichText::new(t.padding_end_hint).size(11.0).color(Color32::from_rgb(140, 135, 155)));
+                                });
+                                ui.end_row();
+                            });
+                    });
+            });
+
+            // ================= MODE SELECTOR (Dark Purple Themed) =================
             ui.horizontal(|ui| {
-                ui.label(egui::RichText::new(t.cut_mode).strong());
-                ui.selectable_value(
-                    &mut self.settings.mode,
-                    CutMode::CleanTimeline,
-                    t.mode_clean_timeline,
-                );
-                ui.selectable_value(
-                    &mut self.settings.mode,
-                    CutMode::ActiveTimeline,
-                    t.mode_active_timeline,
-                );
-                ui.selectable_value(
-                    &mut self.settings.mode,
-                    CutMode::AddMarkers,
-                    t.mode_markers,
-                );
+                ui.label(egui::RichText::new(t.cut_mode).strong().color(Color32::from_rgb(225, 218, 240)));
+                let modes = [
+                    (CutMode::CleanTimeline, t.mode_clean_timeline),
+                    (CutMode::ActiveTimeline, t.mode_active_timeline),
+                    (CutMode::AddMarkers, t.mode_markers),
+                ];
+                for (mode, label) in modes {
+                    let is_selected = self.settings.mode == mode;
+                    let (fill, stroke, text_color) = if is_selected {
+                        (
+                            Color32::from_rgb(54, 26, 78), // karanlık mor aktif buton
+                            Stroke::new(1.2, Color32::from_rgb(170, 52, 225)), // mor kontur
+                            Color32::from_rgb(245, 238, 255),
+                        )
+                    } else {
+                        (
+                            Color32::from_rgb(26, 22, 32),
+                            Stroke::new(1.0, Color32::from_rgb(52, 45, 64)),
+                            Color32::from_rgb(165, 160, 180),
+                        )
+                    };
+
+                    let btn = egui::Button::new(
+                        egui::RichText::new(label)
+                            .size(12.5)
+                            .color(text_color)
+                    )
+                    .fill(fill)
+                    .stroke(stroke)
+                    .corner_radius(6.0);
+
+                    if ui.add(btn).clicked() {
+                        self.settings.mode = mode;
+                    }
+                }
             });
 
             if self.settings.mode == CutMode::CleanTimeline {
@@ -472,7 +509,7 @@ impl eframe::App for AeonCutApp {
 
             ui.separator();
 
-            // ================= ACTION BUTTONS =================
+            // ================= ACTION BUTTONS (Dark Purple Theme) =================
             ui.horizontal(|ui| {
                 let analyze_btn = ui.add_sized(
                     [200.0, 38.0],
@@ -480,9 +517,11 @@ impl eframe::App for AeonCutApp {
                         egui::RichText::new(t.analyze_btn)
                             .size(15.0)
                             .strong()
-                            .color(Color32::WHITE),
+                            .color(Color32::from_rgb(245, 240, 255)),
                     )
-                    .fill(Color32::from_rgb(37, 99, 235)),
+                    .fill(Color32::from_rgb(54, 26, 78)) // karanlık mor zemin
+                    .stroke(Stroke::new(1.2, Color32::from_rgb(170, 52, 225))) // zarif neon mor kontur
+                    .corner_radius(8.0),
                 );
 
                 if analyze_btn.clicked() {
@@ -490,19 +529,31 @@ impl eframe::App for AeonCutApp {
                 }
 
                 let can_apply = self.analysis_result.is_some() && is_connected;
+                let (apply_fill, apply_stroke, apply_text) = if can_apply {
+                    (
+                        Color32::from_rgb(20, 85, 52), // zümrüt hazır
+                        Stroke::new(1.2, Color32::from_rgb(46, 213, 115)),
+                        Color32::from_rgb(240, 255, 245),
+                    )
+                } else {
+                    (
+                        Color32::from_rgb(30, 24, 38), // inaktif koyu mor/antrasit
+                        Stroke::new(1.0, Color32::from_rgb(56, 46, 70)),
+                        Color32::from_rgb(120, 112, 132),
+                    )
+                };
+
                 let apply_btn = ui.add_sized(
                     [260.0, 38.0],
                     egui::Button::new(
                         egui::RichText::new(t.apply_btn)
                             .size(15.0)
                             .strong()
-                            .color(Color32::WHITE),
+                            .color(apply_text),
                     )
-                    .fill(if can_apply {
-                        Color32::from_rgb(16, 185, 129)
-                    } else {
-                        Color32::from_rgb(70, 70, 80)
-                    }),
+                    .fill(apply_fill)
+                    .stroke(apply_stroke)
+                    .corner_radius(8.0),
                 );
 
                 if apply_btn.clicked() && can_apply {
