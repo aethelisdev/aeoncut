@@ -8,20 +8,36 @@ pub struct ResolveBridge {
     python_cmd: String,
 }
 
+const EMBEDDED_BRIDGE_SCRIPT: &str = include_str!("../../bridge/resolve_bridge.py");
+
 impl ResolveBridge {
     pub fn new() -> Self {
         // 1. Locate the bridge script relative to current dir or executable directory
         let mut script_path = PathBuf::from("bridge/resolve_bridge.py");
-        if !script_path.exists() {
+        let mut found = script_path.exists();
+
+        if !found {
             if let Ok(mut exe_dir) = env::current_exe() {
                 exe_dir.pop(); // Remove exe name
                 let candidate1 = exe_dir.join("bridge").join("resolve_bridge.py");
                 let candidate2 = exe_dir.join("resolve_bridge.py");
                 if candidate1.exists() {
                     script_path = candidate1;
+                    found = true;
                 } else if candidate2.exists() {
                     script_path = candidate2;
+                    found = true;
                 }
+            }
+        }
+
+        // If not found as external file, extract the embedded script to a system temp file
+        if !found {
+            let temp_path = env::temp_dir().join("aeon_cut_resolve_bridge.py");
+            if let Err(e) = std::fs::write(&temp_path, EMBEDDED_BRIDGE_SCRIPT) {
+                eprintln!("[WARN] Failed to write embedded bridge script to temp file: {}", e);
+            } else {
+                script_path = temp_path;
             }
         }
 
