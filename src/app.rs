@@ -379,7 +379,7 @@ impl eframe::App for AeonCutApp {
                                             .color(Color32::from_rgb(245, 240, 255)),
                                     );
                                     ui.label(
-                                        egui::RichText::new("v0.1.0")
+                                        egui::RichText::new(concat!("v", env!("CARGO_PKG_VERSION")))
                                             .size(11.0)
                                             .color(Color32::from_rgb(155, 130, 185)),
                                     );
