@@ -18,6 +18,12 @@
 
 ---
 
+<p align="center">
+  <img src="assets/demo.gif" alt="Aeon-Cut Silence Cutting Demo in DaVinci Resolve" width="100%" style="border-radius: 8px;" />
+</p>
+
+---
+
 ## Highlights
 
 * **100% Free & Open Source:** No monthly SaaS subscriptions ($10–20/mo saved).
@@ -66,8 +72,8 @@
 ### Running
 
 ```bash
-git clone https://github.com/your-username/aeon-cut.git
-cd aeon-cut
+git clone https://github.com/aethelisdev/aeoncut.git
+cd aeoncut
 cargo run --release
 ```
 
