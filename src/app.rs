@@ -773,9 +773,11 @@ impl eframe::App for AeonCutApp {
                         .auto_shrink([false, false])
                         .stick_to_bottom(true)
                         .show(ui, |ui| {
-                            ui.spacing_mut().item_spacing = Vec2::new(0.0, 3.0);
+                            ui.spacing_mut().item_spacing = Vec2::new(0.0, 4.0);
                             for entry in &self.logs {
                                 ui.horizontal(|ui| {
+                                    ui.spacing_mut().item_spacing = Vec2::new(7.0, 0.0);
+
                                     // Timestamp [HH:MM:SS] in matte dark gray (#71717a)
                                     ui.label(
                                         egui::RichText::new(format!("[{}]", entry.timestamp))
