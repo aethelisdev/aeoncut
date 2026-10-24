@@ -220,10 +220,50 @@ impl eframe::App for AeonCutApp {
             .frame(egui::Frame::new().fill(Color32::from_rgb(17, 16, 22)))
             .show(ui, |ui| {
                 let screen_w = ui.max_rect().width();
+                let header_height = 56.0;
+                let header_rect = Rect::from_min_max(
+                    Pos2::new(0.0, 0.0),
+                    Pos2::new(screen_w, header_height),
+                );
 
-                // ================= TOP HEADER (Blackish Purple Gradient) =================
-                let header_response = egui::Frame::new()
-                    .inner_margin(egui::Margin { left: 18, right: 18, top: 12, bottom: 12 })
+                // 1. Paint subtle blackish-purple hardware gradient FIRST (behind widgets)
+                let mut bg_mesh = egui::Mesh::default();
+                let c_tl = Color32::from_rgb(36, 18, 48); // refined obsidian violet
+                let c_tr = Color32::from_rgb(22, 14, 32); // deep charcoal purple
+                let c_br = Color32::from_rgb(15, 14, 20); // dark obsidian charcoal
+                let c_bl = Color32::from_rgb(22, 14, 30); // subtle dark violet
+
+                let idx = bg_mesh.vertices.len() as u32;
+                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.left_top(), uv: Pos2::ZERO, color: c_tl });
+                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.right_top(), uv: Pos2::ZERO, color: c_tr });
+                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.right_bottom(), uv: Pos2::ZERO, color: c_br });
+                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.left_bottom(), uv: Pos2::ZERO, color: c_bl });
+                bg_mesh.add_triangle(idx, idx + 1, idx + 2);
+                bg_mesh.add_triangle(idx, idx + 2, idx + 3);
+                ui.painter().add(egui::Shape::mesh(bg_mesh));
+
+                // 1px hairline gradient accent divider at bottom of header
+                let mut border_mesh = egui::Mesh::default();
+                let b_tl = Pos2::new(0.0, header_rect.max.y - 1.0);
+                let b_tr = Pos2::new(screen_w, header_rect.max.y - 1.0);
+                let b_br = Pos2::new(screen_w, header_rect.max.y);
+                let b_bl = Pos2::new(0.0, header_rect.max.y);
+
+                let bc_left = Color32::from_rgba_unmultiplied(170, 50, 220, 85);
+                let bc_right = Color32::from_rgba_unmultiplied(50, 38, 70, 40);
+
+                let b_idx = border_mesh.vertices.len() as u32;
+                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_tl, uv: Pos2::ZERO, color: bc_left });
+                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_tr, uv: Pos2::ZERO, color: bc_right });
+                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_br, uv: Pos2::ZERO, color: bc_right });
+                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_bl, uv: Pos2::ZERO, color: bc_left });
+                border_mesh.add_triangle(b_idx, b_idx + 1, b_idx + 2);
+                border_mesh.add_triangle(b_idx, b_idx + 2, b_idx + 3);
+                ui.painter().add(egui::Shape::mesh(border_mesh));
+
+                // 2. ================= TOP HEADER WIDGETS (Drawn ON TOP of gradient) =================
+                egui::Frame::new()
+                    .inner_margin(egui::Margin { left: 18, right: 18, top: 10, bottom: 10 })
                     .show(ui, |ui| {
                         ui.horizontal(|ui| {
                             // Left: Logo + App Titles
@@ -323,53 +363,6 @@ impl eframe::App for AeonCutApp {
                             });
                         });
                     });
-
-                // Paint the subtle blackish-purple hardware gradient behind the header
-                let header_rect = Rect::from_min_max(
-                    Pos2::new(0.0, 0.0),
-                    Pos2::new(screen_w, header_response.response.rect.max.y),
-                );
-
-                let bg_painter = ui.ctx().layer_painter(egui::LayerId::background());
-
-                let mut bg_mesh = egui::Mesh::default();
-                // Subtle blackish-purple gradient:
-                // Top-left: refined obsidian violet (#241230)
-                // Top-right: deep charcoal purple (#160e20)
-                // Bottom-right: dark obsidian charcoal (#0f0e14)
-                // Bottom-left: subtle dark violet (#160e1e)
-                let c_tl = Color32::from_rgb(36, 18, 48);
-                let c_tr = Color32::from_rgb(22, 14, 32);
-                let c_br = Color32::from_rgb(15, 14, 20);
-                let c_bl = Color32::from_rgb(22, 14, 30);
-
-                let idx = bg_mesh.vertices.len() as u32;
-                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.left_top(), uv: Pos2::ZERO, color: c_tl });
-                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.right_top(), uv: Pos2::ZERO, color: c_tr });
-                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.right_bottom(), uv: Pos2::ZERO, color: c_br });
-                bg_mesh.vertices.push(egui::epaint::Vertex { pos: header_rect.left_bottom(), uv: Pos2::ZERO, color: c_bl });
-                bg_mesh.add_triangle(idx, idx + 1, idx + 2);
-                bg_mesh.add_triangle(idx, idx + 2, idx + 3);
-                bg_painter.add(egui::Shape::mesh(bg_mesh));
-
-                // Hairline gradient accent divider at bottom of header
-                let mut border_mesh = egui::Mesh::default();
-                let b_tl = Pos2::new(0.0, header_rect.max.y - 1.0);
-                let b_tr = Pos2::new(screen_w, header_rect.max.y - 1.0);
-                let b_br = Pos2::new(screen_w, header_rect.max.y);
-                let b_bl = Pos2::new(0.0, header_rect.max.y);
-
-                let bc_left = Color32::from_rgba_unmultiplied(170, 50, 220, 85);
-                let bc_right = Color32::from_rgba_unmultiplied(50, 38, 70, 40);
-
-                let b_idx = border_mesh.vertices.len() as u32;
-                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_tl, uv: Pos2::ZERO, color: bc_left });
-                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_tr, uv: Pos2::ZERO, color: bc_right });
-                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_br, uv: Pos2::ZERO, color: bc_right });
-                border_mesh.vertices.push(egui::epaint::Vertex { pos: b_bl, uv: Pos2::ZERO, color: bc_left });
-                border_mesh.add_triangle(b_idx, b_idx + 1, b_idx + 2);
-                border_mesh.add_triangle(b_idx, b_idx + 2, b_idx + 3);
-                bg_painter.add(egui::Shape::mesh(border_mesh));
 
                 // Body content below header
                 egui::Frame::new()
