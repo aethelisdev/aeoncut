@@ -21,8 +21,8 @@ fn load_app_icon() -> Option<egui::IconData> {
 fn main() -> eframe::Result<()> {
     let mut builder = egui::ViewportBuilder::default()
         .with_app_id("aeon-cut")
-        .with_inner_size([760.0, 560.0])
-        .with_min_inner_size([600.0, 440.0])
+        .with_inner_size([760.0, 650.0])
+        .with_min_inner_size([640.0, 520.0])
         .with_title("AEON-CUT // DaVinci Resolve 21 VAD Studio");
 
     if let Some(icon) = load_app_icon() {

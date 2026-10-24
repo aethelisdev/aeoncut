@@ -8,6 +8,47 @@ use crate::engine::{load_audio_pcm_16k, VadDetector};
 use crate::i18n::{get_strings, Language};
 use crate::models::{AnalysisResult, CutMode, CutSettings, SelectedClipInfo, TimelineStatus};
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum LogLevel {
+    Info,
+    Ready,
+    Vad,
+    Success,
+    Warn,
+    Error,
+}
+
+impl LogLevel {
+    pub fn tag(&self) -> &'static str {
+        match self {
+            LogLevel::Info => "INFO",
+            LogLevel::Ready => "READY",
+            LogLevel::Vad => "VAD",
+            LogLevel::Success => "SUCCESS",
+            LogLevel::Warn => "WARN",
+            LogLevel::Error => "ERROR",
+        }
+    }
+
+    pub fn color(&self) -> Color32 {
+        match self {
+            LogLevel::Info => Color32::from_rgb(161, 161, 170),   // Matte light gray (#a1a1aa)
+            LogLevel::Ready => Color32::from_rgb(74, 222, 128),   // Soft mint green (#4ade80)
+            LogLevel::Vad => Color32::from_rgb(192, 132, 252),     // Soft violet (#c084fc)
+            LogLevel::Success => Color32::from_rgb(74, 222, 128), // Soft mint green (#4ade80)
+            LogLevel::Warn => Color32::from_rgb(245, 158, 11),    // Amber (#f59e0b)
+            LogLevel::Error => Color32::from_rgb(248, 113, 113),  // Soft rose red (#f87171)
+        }
+    }
+}
+
+#[derive(Clone, Debug)]
+pub struct LogEntry {
+    pub timestamp: String,
+    pub level: LogLevel,
+    pub message: String,
+}
+
 pub struct AeonCutApp {
     bridge: ResolveBridge,
     status: Option<TimelineStatus>,
@@ -20,6 +61,7 @@ pub struct AeonCutApp {
     last_status_check: Instant,
     pub lang: Language,
     logo_texture: Option<TextureHandle>,
+    pub logs: Vec<LogEntry>,
 }
 
 impl Default for AeonCutApp {
@@ -30,7 +72,7 @@ impl Default for AeonCutApp {
         let lang = Language::English;
         let t = get_strings(lang);
 
-        Self {
+        let mut app = Self {
             bridge,
             status,
             selected_clip,
@@ -42,11 +84,34 @@ impl Default for AeonCutApp {
             last_status_check: Instant::now(),
             lang,
             logo_texture: None,
+            logs: Vec::new(),
+        };
+
+        app.add_log(LogLevel::Info, "Engine initialized. DaVinci Resolve 21 bridge active.");
+        if app.status.as_ref().map_or(false, |s| s.connected) {
+            let proj = app.status.as_ref().and_then(|s| s.project_name.as_deref()).unwrap_or("Active Project");
+            app.add_log(LogLevel::Ready, format!("Connected to DaVinci Resolve project: '{}'.", proj));
+        } else {
+            app.add_log(LogLevel::Warn, "Waiting for DaVinci Resolve connection (ensure scripting is enabled).");
         }
+
+        app
     }
 }
 
 impl AeonCutApp {
+    pub fn add_log(&mut self, level: LogLevel, message: impl Into<String>) {
+        let timestamp = chrono::Local::now().format("%H:%M:%S").to_string();
+        self.logs.push(LogEntry {
+            timestamp,
+            level,
+            message: message.into(),
+        });
+        if self.logs.len() > 250 {
+            self.logs.remove(0);
+        }
+    }
+
     pub fn ensure_textures(&mut self, ctx: &egui::Context) {
         if self.logo_texture.is_none() {
             let img_bytes = include_bytes!("../assets/Aeoncut.png");
@@ -74,16 +139,20 @@ impl AeonCutApp {
                     if let Ok(clip) = self.bridge.get_selected_clip() {
                         self.selected_clip = Some(clip);
                     }
+                    let proj = self.status.as_ref().and_then(|s| s.project_name.as_deref()).unwrap_or("Active Project");
                     self.status_message = "Synchronized with DaVinci Resolve.".to_string();
                     self.status_is_error = false;
+                    self.add_log(LogLevel::Info, format!("Synchronized with Resolve project: '{}'.", proj));
                 } else {
                     self.status_message = "DaVinci Resolve is not running or scripting API is disabled.".to_string();
                     self.status_is_error = true;
+                    self.add_log(LogLevel::Warn, "DaVinci Resolve is not running or scripting API is disabled.");
                 }
             }
             Err(e) => {
                 self.status_message = format!("Resolve error: {}", e);
                 self.status_is_error = true;
+                self.add_log(LogLevel::Error, format!("Resolve connection error: {}", e));
             }
         }
     }
@@ -94,10 +163,12 @@ impl AeonCutApp {
         }
 
         let clip = match &self.selected_clip {
-            Some(c) if c.has_selection => c,
+            Some(c) if c.has_selection => c.clone(),
             _ => {
-                self.status_message = "Error: No clip selected in timeline. Please select a clip.".to_string();
+                let err = "No clip selected in timeline. Please select a clip.";
+                self.status_message = format!("Error: {}", err);
                 self.status_is_error = true;
+                self.add_log(LogLevel::Warn, err);
                 return;
             }
         };
@@ -105,83 +176,109 @@ impl AeonCutApp {
         let file_path = match &clip.file_path {
             Some(p) if !p.empty_path() => PathBuf::from(p),
             _ => {
-                self.status_message = "Error: Clip media file path could not be resolved.".to_string();
+                let err = "Clip media file path could not be resolved from Resolve.";
+                self.status_message = format!("Error: {}", err);
                 self.status_is_error = true;
+                self.add_log(LogLevel::Error, err);
                 return;
             }
         };
 
-        self.status_message = format!(
-            "Loading and analyzing audio: {}...",
-            file_path.file_name().unwrap_or_default().to_string_lossy()
-        );
+        let clip_name = clip.clip_name.as_deref().unwrap_or("Selected Clip").to_string();
+        self.add_log(LogLevel::Vad, format!("Analyzing audio stream for '{}'...", clip_name));
 
         let start_time = Instant::now();
         match load_audio_pcm_16k(&file_path) {
             Ok(audio) => {
-                let result = VadDetector::analyze(&audio, &self.settings, clip);
+                let result = VadDetector::analyze(&audio, &self.settings, &clip);
                 let elapsed = start_time.elapsed().as_millis();
+                let seg_count = result.segments.len();
+                let speech_pct = result.speech_percentage;
+                let silence_pct = 100.0 - speech_pct;
+
                 self.status_message = format!(
                     "✓ Analysis completed in {} ms! Detected {} speech segments ({:.1}% speech, {:.1}% silence).",
-                    elapsed,
-                    result.segments.len(),
-                    result.speech_percentage,
-                    100.0 - result.speech_percentage
+                    elapsed, seg_count, speech_pct, silence_pct
                 );
                 self.status_is_error = false;
                 self.analysis_result = Some(result);
+
+                self.add_log(
+                    LogLevel::Vad,
+                    format!("Analysis completed in {} ms: found {} speech segments.", elapsed, seg_count),
+                );
+                self.add_log(
+                    LogLevel::Ready,
+                    format!("Speech: {:.1}% | Silences removed: {:.1}%. Ready to apply cuts.", speech_pct, silence_pct),
+                );
             }
             Err(e) => {
-                self.status_message = format!("Audio decoding error: {}", e);
+                let err_msg = format!("Audio decoding error: {}", e);
+                self.status_message = err_msg.clone();
                 self.status_is_error = true;
+                self.add_log(LogLevel::Error, err_msg);
             }
         }
     }
 
     pub fn apply_cuts_to_resolve(&mut self) {
-        let analysis = match &self.analysis_result {
-            Some(a) if !a.segments.is_empty() => a,
+        let segments = match &self.analysis_result {
+            Some(a) if !a.segments.is_empty() => a.segments.clone(),
             _ => {
-                self.status_message = "Please analyze the clip first before applying cuts.".to_string();
+                let err = "Please analyze the clip first before applying cuts.";
+                self.status_message = err.to_string();
                 self.status_is_error = true;
+                self.add_log(LogLevel::Warn, err);
                 return;
             }
         };
 
         match self.settings.mode {
             CutMode::CleanTimeline => {
-                match self.bridge.apply_clean_timeline(&analysis.segments, &self.timeline_suffix) {
+                self.add_log(LogLevel::Info, format!("Creating clean timeline with suffix '{}'...", self.timeline_suffix));
+                match self.bridge.apply_clean_timeline(&segments, &self.timeline_suffix) {
                     Ok(new_name) => {
                         self.status_message = format!("✓ Success: Created and switched to clean timeline '{}'!", new_name);
                         self.status_is_error = false;
+                        self.add_log(LogLevel::Success, format!("Cuts applied to clean timeline: '{}'.", new_name));
                     }
                     Err(e) => {
-                        self.status_message = format!("Failed to create clean timeline: {}", e);
+                        let err = format!("Failed to create clean timeline: {}", e);
+                        self.status_message = err.clone();
                         self.status_is_error = true;
+                        self.add_log(LogLevel::Error, err);
                     }
                 }
             }
             CutMode::ActiveTimeline => {
-                match self.bridge.apply_active_timeline(&analysis.segments) {
+                self.add_log(LogLevel::Info, "Appending cut slices directly to active timeline...");
+                match self.bridge.apply_active_timeline(&segments) {
                     Ok(count) => {
                         self.status_message = format!("✓ Success: Appended {} cut speech segments directly to active timeline!", count);
                         self.status_is_error = false;
+                        self.add_log(LogLevel::Success, format!("Appended {} cut speech segments to active timeline.", count));
                     }
                     Err(e) => {
-                        self.status_message = format!("Failed to append to active timeline: {}", e);
+                        let err = format!("Failed to append to active timeline: {}", e);
+                        self.status_message = err.clone();
                         self.status_is_error = true;
+                        self.add_log(LogLevel::Error, err);
                     }
                 }
             }
             CutMode::AddMarkers => {
-                match self.bridge.apply_markers(&analysis.segments) {
+                self.add_log(LogLevel::Info, "Placing speech cut markers on clip and timeline...");
+                match self.bridge.apply_markers(&segments) {
                     Ok(count) => {
                         self.status_message = format!("✓ Success: Added {} speech markers to clip and timeline!", count);
                         self.status_is_error = false;
+                        self.add_log(LogLevel::Success, format!("Added {} speech markers across clip and timeline.", count));
                     }
                     Err(e) => {
-                        self.status_message = format!("Failed to add markers: {}", e);
+                        let err = format!("Failed to add markers: {}", e);
+                        self.status_message = err.clone();
                         self.status_is_error = true;
+                        self.add_log(LogLevel::Error, err);
                     }
                 }
             }
@@ -614,22 +711,91 @@ impl eframe::App for AeonCutApp {
                     });
             }
 
-            ui.add_space(8.0);
+            ui.add_space(6.0);
 
-            // ================= STATUS MESSAGE BANNER =================
-            let banner_color = if self.status_is_error {
-                Color32::from_rgb(239, 68, 68)
-            } else {
-                Color32::from_rgb(16, 185, 129)
-            };
+            // ================= STUDIO LOG PANEL =================
+            egui::Frame::new()
+                .fill(Color32::from_rgb(11, 11, 15)) // dark console background (#0b0b0f)
+                .stroke(Stroke::new(1.0, Color32::from_rgb(31, 31, 40))) // subtle border (#1f1f28)
+                .corner_radius(6.0)
+                .inner_margin(egui::Margin::symmetric(10, 8))
+                .show(ui, |ui| {
+                    // 1. Mini Header Bar: Console / Activity Log + Clear Button
+                    ui.horizontal(|ui| {
+                        ui.label(
+                            egui::RichText::new("CONSOLE // ACTIVITY LOG")
+                                .size(10.5)
+                                .monospace()
+                                .color(Color32::from_rgb(145, 140, 160)),
+                        );
 
-            ui.horizontal(|ui| {
-                ui.label(
-                    egui::RichText::new(&self.status_message)
-                        .color(banner_color)
-                        .size(13.0),
-                );
-            });
+                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                            let clear_btn = egui::Button::new(
+                                egui::RichText::new("Clear")
+                                    .size(10.0)
+                                    .color(Color32::from_rgb(160, 155, 175))
+                            )
+                            .fill(Color32::from_rgb(22, 20, 28))
+                            .stroke(Stroke::new(1.0, Color32::from_rgb(48, 42, 60)))
+                            .corner_radius(4.0);
+
+                            if ui.add(clear_btn).clicked() {
+                                self.logs.clear();
+                            }
+                        });
+                    });
+
+                    ui.add_space(2.0);
+                    ui.separator();
+                    ui.add_space(2.0);
+
+                    // 2. Monospace Log Stream with Auto-Scroll
+                    egui::ScrollArea::vertical()
+                        .max_height(120.0)
+                        .min_scrolled_height(80.0)
+                        .auto_shrink([false, false])
+                        .stick_to_bottom(true)
+                        .show(ui, |ui| {
+                            ui.spacing_mut().item_spacing = Vec2::new(0.0, 3.0);
+                            for entry in &self.logs {
+                                ui.horizontal(|ui| {
+                                    // Timestamp [HH:MM:SS] in matte dark gray (#71717a)
+                                    ui.label(
+                                        egui::RichText::new(format!("[{}]", entry.timestamp))
+                                            .monospace()
+                                            .size(11.0)
+                                            .color(Color32::from_rgb(113, 113, 122)),
+                                    );
+
+                                    // Level tag [INFO], [READY], [VAD], [SUCCESS], [WARN], [ERROR]
+                                    ui.label(
+                                        egui::RichText::new(format!("[{}]", entry.level.tag()))
+                                            .monospace()
+                                            .size(11.0)
+                                            .strong()
+                                            .color(entry.level.color()),
+                                    );
+
+                                    // Message text in soft matching tone
+                                    let msg_color = match entry.level {
+                                        LogLevel::Info => Color32::from_rgb(180, 180, 190),
+                                        LogLevel::Ready => Color32::from_rgb(130, 230, 160),
+                                        LogLevel::Vad => Color32::from_rgb(215, 175, 255),
+                                        LogLevel::Success => Color32::from_rgb(130, 230, 160),
+                                        LogLevel::Warn => Color32::from_rgb(250, 185, 80),
+                                        LogLevel::Error => Color32::from_rgb(255, 140, 140),
+                                    };
+
+                                    ui.label(
+                                        egui::RichText::new(&entry.message)
+                                            .monospace()
+                                            .size(11.0)
+                                            .color(msg_color),
+                                    );
+                                });
+                            }
+                        });
+                });
         });
     });
 }
