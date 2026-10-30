@@ -1,14 +1,8 @@
-mod app;
-mod bridge;
-mod engine;
-mod i18n;
-mod models;
-
-use app::AeonCutApp;
+use aeon_cut::app::AeonCutApp;
 use eframe::egui;
 
 fn load_app_icon() -> Option<egui::IconData> {
-    let png_bytes = include_bytes!("../assets/Aeoncut.png");
+    let png_bytes = include_bytes!("../../../assets/Aeoncut.png");
     let img = image::load_from_memory(png_bytes).ok()?.to_rgba8();
     let (width, height) = img.dimensions();
     Some(egui::IconData {

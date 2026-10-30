@@ -1,0 +1,18 @@
+[package]
+name = "aeon-cut"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Ultra-fast Audio Silence Cut Plugin & App for DaVinci Resolve 21"
+
+[[bin]]
+name = "aeon-cut"
+path = "src/main.rs"
+
+[dependencies]
+aeon-cut-core = { path = "../aeon-cut-core" }
+eframe = { workspace = true }
+egui = { workspace = true }
+image = { workspace = true }
+serde = { workspace = true }
+chrono = { workspace = true }

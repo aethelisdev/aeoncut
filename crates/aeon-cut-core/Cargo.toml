@@ -1,0 +1,13 @@
+[package]
+name = "aeon-cut-core"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+description = "Core Audio VAD and DaVinci Resolve Scripting Bridge for Aeon-Cut"
+
+[dependencies]
+serde = { workspace = true }
+serde_json = { workspace = true }
+symphonia = { workspace = true }
+hound = { workspace = true }
+chrono = { workspace = true }

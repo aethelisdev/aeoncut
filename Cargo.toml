@@ -1,16 +1,21 @@
-[package]
-name = "aeon-cut"
+[workspace]
+members = [
+    "crates/aeon-cut-core",
+    "crates/aeon-cut-gui",
+]
+resolver = "2"
+
+[workspace.package]
 version = "0.3.0"
 edition = "2024"
 authors = ["AeonCut Team"]
-description = "Ultra-fast Audio Silence Cut Plugin & App for DaVinci Resolve 21"
 
-[dependencies]
-eframe = "0.37.0"
-egui = "0.37.0"
+[workspace.dependencies]
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 symphonia = { version = "0.6", features = ["all"] }
 hound = "3.5"
 image = { version = "0.25", default-features = false, features = ["png"] }
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+eframe = "0.37.0"
+egui = "0.37.0"

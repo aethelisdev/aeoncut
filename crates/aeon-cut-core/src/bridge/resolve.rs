@@ -8,7 +8,7 @@ pub struct ResolveBridge {
     python_cmd: String,
 }
 
-const EMBEDDED_BRIDGE_SCRIPT: &str = include_str!("../../bridge/resolve_bridge.py");
+const EMBEDDED_BRIDGE_SCRIPT: &str = include_str!("../../../../bridge/resolve_bridge.py");
 
 struct TempSegmentsFile {
     path: PathBuf,

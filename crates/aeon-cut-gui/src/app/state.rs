@@ -73,7 +73,7 @@ impl AeonCutApp {
 
     pub fn ensure_textures(&mut self, ctx: &egui::Context) {
         if self.logo_texture.is_none() {
-            let img_bytes = include_bytes!("../../assets/Aeoncut.png");
+            let img_bytes = include_bytes!("../../../../assets/Aeoncut.png");
             if let Ok(loaded) = image::load_from_memory(img_bytes) {
                 let rgba = loaded.to_rgba8();
                 let (w, h) = rgba.dimensions();

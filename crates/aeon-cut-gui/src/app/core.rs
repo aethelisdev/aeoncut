@@ -5,7 +5,7 @@ use eframe::egui::{self, TextureHandle};
 use crate::app::state::{LogEntry, LogLevel};
 use crate::app::ui;
 use crate::bridge::ResolveBridge;
-use crate::i18n::{get_strings, Language};
+use crate::i18n::{Language, get_strings};
 use crate::models::{AnalysisResult, CutSettings, SelectedClipInfo, TimelineStatus};
 
 pub struct AeonCutApp {

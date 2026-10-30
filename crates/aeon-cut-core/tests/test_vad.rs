@@ -1,6 +1,6 @@
-use aeon_cut::engine::VadDetector;
-use aeon_cut::engine::audio_loader::DecodedAudio;
-use aeon_cut::models::{CutMode, CutSettings, SelectedClipInfo};
+use aeon_cut_core::engine::VadDetector;
+use aeon_cut_core::engine::audio_loader::DecodedAudio;
+use aeon_cut_core::models::{CutMode, CutSettings, SelectedClipInfo};
 
 #[test]
 fn test_vad_silence_detection() {
