@@ -1,5 +1,5 @@
-use aeon_cut::engine::audio_loader::DecodedAudio;
 use aeon_cut::engine::VadDetector;
+use aeon_cut::engine::audio_loader::DecodedAudio;
 use aeon_cut::models::{CutMode, CutSettings, SelectedClipInfo};
 
 #[test]
@@ -15,9 +15,7 @@ fn test_vad_silence_detection() {
     }
 
     // 1.0s of digital silence (0.0)
-    for _ in 0..sample_rate {
-        samples.push(0.0);
-    }
+    samples.resize(samples.len() + sample_rate, 0.0);
 
     // 1.0s of sine wave tone (~ -10 dBFS)
     for i in 0..sample_rate {
@@ -28,7 +26,6 @@ fn test_vad_silence_detection() {
     let audio = DecodedAudio {
         samples,
         sample_rate: sample_rate as u32,
-        channels: 1,
         duration_seconds: 3.0,
     };
 
@@ -66,7 +63,11 @@ fn test_vad_silence_detection() {
         );
     }
 
-    assert_eq!(result.segments.len(), 2, "Expected exactly 2 speech segments");
+    assert_eq!(
+        result.segments.len(),
+        2,
+        "Expected exactly 2 speech segments"
+    );
     assert!(result.speech_duration_seconds > 1.8 && result.speech_duration_seconds < 2.3);
     assert!(result.silence_duration_seconds > 0.7 && result.silence_duration_seconds < 1.2);
 }

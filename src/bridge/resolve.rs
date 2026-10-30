@@ -1,7 +1,7 @@
+use crate::models::{SelectedClipInfo, SpeechSegment, TimelineStatus};
 use std::env;
 use std::path::PathBuf;
 use std::process::Command;
-use crate::models::{SelectedClipInfo, SpeechSegment, TimelineStatus};
 
 pub struct ResolveBridge {
     script_path: PathBuf,
@@ -49,18 +49,16 @@ impl ResolveBridge {
         let mut script_path = PathBuf::from("bridge/resolve_bridge.py");
         let mut found = script_path.exists();
 
-        if !found {
-            if let Ok(mut exe_dir) = env::current_exe() {
-                exe_dir.pop(); // Remove exe name
-                let candidate1 = exe_dir.join("bridge").join("resolve_bridge.py");
-                let candidate2 = exe_dir.join("resolve_bridge.py");
-                if candidate1.exists() {
-                    script_path = candidate1;
-                    found = true;
-                } else if candidate2.exists() {
-                    script_path = candidate2;
-                    found = true;
-                }
+        if !found && let Ok(mut exe_dir) = env::current_exe() {
+            exe_dir.pop(); // Remove exe name
+            let candidate1 = exe_dir.join("bridge").join("resolve_bridge.py");
+            let candidate2 = exe_dir.join("resolve_bridge.py");
+            if candidate1.exists() {
+                script_path = candidate1;
+                found = true;
+            } else if candidate2.exists() {
+                script_path = candidate2;
+                found = true;
             }
         }
 
@@ -68,7 +66,10 @@ impl ResolveBridge {
         if !found {
             let temp_path = env::temp_dir().join("aeon_cut_resolve_bridge.py");
             if let Err(e) = std::fs::write(&temp_path, EMBEDDED_BRIDGE_SCRIPT) {
-                eprintln!("[WARN] Failed to write embedded bridge script to temp file: {}", e);
+                eprintln!(
+                    "[WARN] Failed to write embedded bridge script to temp file: {}",
+                    e
+                );
             } else {
                 script_path = temp_path;
             }
@@ -93,7 +94,12 @@ impl ResolveBridge {
             return "python".to_string();
         }
         // Try Windows Python Launcher (py)
-        if Command::new("py").arg("-3").arg("--version").output().is_ok() {
+        if Command::new("py")
+            .arg("-3")
+            .arg("--version")
+            .output()
+            .is_ok()
+        {
             return "py".to_string();
         }
         // Fallback default
@@ -210,7 +216,10 @@ impl ResolveBridge {
             return Err(err.to_string());
         }
 
-        Ok(resp.get("segments_count").and_then(|v| v.as_u64()).unwrap_or(0) as usize)
+        Ok(resp
+            .get("segments_count")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0) as usize)
     }
 
     pub fn apply_markers(&self, segments: &[SpeechSegment]) -> Result<usize, String> {
@@ -239,6 +248,15 @@ impl ResolveBridge {
             return Err(err.to_string());
         }
 
-        Ok(resp.get("markers_added").and_then(|v| v.as_u64()).unwrap_or(0) as usize)
+        Ok(resp
+            .get("markers_added")
+            .and_then(|v| v.as_u64())
+            .unwrap_or(0) as usize)
+    }
+}
+
+impl Default for ResolveBridge {
+    fn default() -> Self {
+        Self::new()
     }
 }

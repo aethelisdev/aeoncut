@@ -10,7 +10,6 @@ pub enum Language {
 }
 
 impl Language {
-    #[allow(dead_code)]
     pub fn display_name(&self) -> &'static str {
         match self {
             Language::English => "English",

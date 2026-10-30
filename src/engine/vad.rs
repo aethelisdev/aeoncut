@@ -84,18 +84,22 @@ impl VadDetector {
             let start_sec = (f_start as f64 * frame_duration_sec - pad_start_sec).max(0.0);
             let end_sec = (f_end as f64 * frame_duration_sec + pad_end_sec).min(total_duration);
 
-            if let Some(last) = padded_ranges.last_mut() {
-                if start_sec <= last.1 {
-                    // Overlapping due to padding expansion -> merge smoothly
-                    last.1 = last.1.max(end_sec);
-                    continue;
-                }
+            if let Some(last) = padded_ranges.last_mut()
+                && start_sec <= last.1
+            {
+                // Overlapping due to padding expansion -> merge smoothly
+                last.1 = last.1.max(end_sec);
+                continue;
             }
             padded_ranges.push((start_sec, end_sec));
         }
 
         // 6. Map seconds to DaVinci Resolve Timeline and Source timecode frames
-        let fps = if clip_info.fps > 0.0 { clip_info.fps } else { 24.0 };
+        let fps = if clip_info.fps > 0.0 {
+            clip_info.fps
+        } else {
+            24.0
+        };
         let source_start_frame = clip_info.source_start_frame.unwrap_or(0);
         let timeline_start_frame = clip_info.timeline_start_frame.unwrap_or(0);
 

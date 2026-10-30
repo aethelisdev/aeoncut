@@ -43,7 +43,8 @@ fn main() -> eframe::Result<()> {
             visuals.window_fill = egui::Color32::from_rgb(22, 22, 28);
             visuals.extreme_bg_color = egui::Color32::from_rgb(14, 14, 18);
             visuals.selection.bg_fill = egui::Color32::from_rgb(56, 26, 82);
-            visuals.selection.stroke = egui::Stroke::new(1.0, egui::Color32::from_rgb(175, 55, 230));
+            visuals.selection.stroke =
+                egui::Stroke::new(1.0, egui::Color32::from_rgb(175, 55, 230));
             cc.egui_ctx.set_visuals(visuals);
 
             Ok(Box::new(AeonCutApp::default()))
