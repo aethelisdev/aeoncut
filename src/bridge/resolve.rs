@@ -10,6 +10,39 @@ pub struct ResolveBridge {
 
 const EMBEDDED_BRIDGE_SCRIPT: &str = include_str!("../../bridge/resolve_bridge.py");
 
+struct TempSegmentsFile {
+    path: PathBuf,
+}
+
+impl TempSegmentsFile {
+    fn new(segments: &[SpeechSegment]) -> Result<Self, String> {
+        let json_data = serde_json::to_string(segments)
+            .map_err(|e| format!("Failed to serialize segments: {}", e))?;
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        let path = env::temp_dir().join(format!(
+            "aeon_cut_segments_{}_{}.json",
+            std::process::id(),
+            timestamp
+        ));
+        std::fs::write(&path, json_data)
+            .map_err(|e| format!("Failed to write segments to temp file: {}", e))?;
+        Ok(Self { path })
+    }
+
+    fn path_str(&self) -> String {
+        self.path.to_string_lossy().to_string()
+    }
+}
+
+impl Drop for TempSegmentsFile {
+    fn drop(&mut self) {
+        let _ = std::fs::remove_file(&self.path);
+    }
+}
+
 impl ResolveBridge {
     pub fn new() -> Self {
         // 1. Locate the bridge script relative to current dir or executable directory
@@ -117,20 +150,24 @@ impl ResolveBridge {
         segments: &[SpeechSegment],
         suffix: &str,
     ) -> Result<String, String> {
-        let json_data = serde_json::to_string(segments)
-            .map_err(|e| format!("Failed to serialize segments: {}", e))?;
+        let temp_file = TempSegmentsFile::new(segments)?;
 
         let mut cmd = self.build_command();
         cmd.arg("--action")
             .arg("create_clean_timeline")
             .arg("--segments-json")
-            .arg(json_data)
+            .arg(temp_file.path_str())
             .arg("--suffix")
             .arg(suffix);
 
         let output = cmd
             .output()
             .map_err(|e| format!("Failed to execute Python bridge: {}", e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Bridge process error: {}", stderr));
+        }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let resp: serde_json::Value = serde_json::from_str(&stdout)
@@ -148,18 +185,22 @@ impl ResolveBridge {
     }
 
     pub fn apply_active_timeline(&self, segments: &[SpeechSegment]) -> Result<usize, String> {
-        let json_data = serde_json::to_string(segments)
-            .map_err(|e| format!("Failed to serialize segments: {}", e))?;
+        let temp_file = TempSegmentsFile::new(segments)?;
 
         let mut cmd = self.build_command();
         cmd.arg("--action")
             .arg("append_to_active")
             .arg("--segments-json")
-            .arg(json_data);
+            .arg(temp_file.path_str());
 
         let output = cmd
             .output()
             .map_err(|e| format!("Failed to execute Python bridge: {}", e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Bridge process error: {}", stderr));
+        }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let resp: serde_json::Value = serde_json::from_str(&stdout)
@@ -173,18 +214,22 @@ impl ResolveBridge {
     }
 
     pub fn apply_markers(&self, segments: &[SpeechSegment]) -> Result<usize, String> {
-        let json_data = serde_json::to_string(segments)
-            .map_err(|e| format!("Failed to serialize segments: {}", e))?;
+        let temp_file = TempSegmentsFile::new(segments)?;
 
         let mut cmd = self.build_command();
         cmd.arg("--action")
             .arg("add_markers")
             .arg("--segments-json")
-            .arg(json_data);
+            .arg(temp_file.path_str());
 
         let output = cmd
             .output()
             .map_err(|e| format!("Failed to execute Python bridge: {}", e))?;
+
+        if !output.status.success() {
+            let stderr = String::from_utf8_lossy(&output.stderr);
+            return Err(format!("Bridge process error: {}", stderr));
+        }
 
         let stdout = String::from_utf8_lossy(&output.stdout);
         let resp: serde_json::Value = serde_json::from_str(&stdout)

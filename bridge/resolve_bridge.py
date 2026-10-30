@@ -286,9 +286,28 @@ def apply_cuts_active_timeline(speech_segments: List[Dict[str, Any]]) -> Dict[st
         total_frames += dur
         
     res = media_pool.AppendToTimeline(subclips)
+    if not res:
+        added = 0
+        chunk_size = 100
+        for i in range(0, len(subclips), chunk_size):
+            chunk = subclips[i:i + chunk_size]
+            if media_pool.AppendToTimeline(chunk):
+                added += len(chunk)
+            else:
+                for sc in chunk:
+                    if media_pool.AppendToTimeline([sc]):
+                        added += 1
+        res = added > 0
+        count = added
+    else:
+        count = len(subclips)
+
+    if not res:
+        return {"error": "Failed to append cut subclips to active timeline."}
+
     return {
-        "success": bool(res),
-        "segments_count": len(subclips),
+        "success": True,
+        "segments_count": count,
         "total_frames": total_frames
     }
 

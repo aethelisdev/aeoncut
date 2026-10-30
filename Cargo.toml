@@ -1,6 +1,6 @@
 [package]
 name = "aeon-cut"
-version = "0.2.1"
+version = "0.2.2"
 edition = "2024"
 authors = ["AeonCut Team"]
 description = "Ultra-fast Audio Silence Cut Plugin & App for DaVinci Resolve 21"
